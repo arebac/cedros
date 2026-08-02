@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,15 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../lib/api';
 
 type Tab = 'overview' | 'residents' | 'email' | 'announcements' | 'quickbooks';
+
+function getInitialAdminTab(pathname: string, search: string): Tab {
+  const requestedTab = new URLSearchParams(search).get('tab');
+  if (pathname.endsWith('/quickbooks') || requestedTab === 'quickbooks' || search.includes('qb=connected')) {
+    return 'quickbooks';
+  }
+
+  return 'overview';
+}
 
 type AnnouncementForm = {
   titleEs: string;
@@ -744,7 +754,9 @@ function QuickBooksTab() {
 export default function AdminPage() {
   const { t, i18n } = useTranslation();
   const { logout } = useAuth();
-  const [tab, setTab] = useState<Tab>('overview');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [tab, setTab] = useState<Tab>(() => getInitialAdminTab(location.pathname, location.search));
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'overview', label: 'Resumen' },
@@ -753,6 +765,11 @@ export default function AdminPage() {
     { key: 'announcements', label: 'Avisos' },
     { key: 'quickbooks', label: 'QuickBooks' },
   ];
+
+  const selectTab = (nextTab: Tab) => {
+    setTab(nextTab);
+    navigate(nextTab === 'quickbooks' ? '/admin/quickbooks' : '/admin', { replace: false });
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -790,7 +807,7 @@ export default function AdminPage() {
           {tabs.map(({ key, label }) => (
             <button
               key={key}
-              onClick={() => setTab(key)}
+              onClick={() => selectTab(key)}
               className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${tab === key ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
             >
               {label}

@@ -120,8 +120,8 @@ export class PaymentsService {
 
     await this.payments.save(payment);
     await this.notifications.sendPaymentReceipt(user, payment);
-    const quickbooksPaymentId = await this.quickbooks.syncPayment(user, payment).catch((err) => {
-      this.logger.error(`QuickBooks sync failed for payment ${payment.id}: ${err.message}`);
+    const quickbooksPaymentId = await this.quickbooks.syncPayment(user, payment).catch(() => {
+      this.logger.error(`QuickBooks sync failed for payment ${payment.id}`);
       return null;
     });
     if (quickbooksPaymentId) {
@@ -178,8 +178,8 @@ export class PaymentsService {
       notes,
     });
     await this.payments.save(payment);
-    const quickbooksPaymentId = await this.quickbooks.syncPayment(user, payment).catch((err) => {
-      this.logger.error(`QuickBooks sync failed: ${err.message}`);
+    const quickbooksPaymentId = await this.quickbooks.syncPayment(user, payment).catch(() => {
+      this.logger.error(`QuickBooks sync failed for manual payment ${payment.id}`);
       return null;
     });
     if (quickbooksPaymentId) {

@@ -52,7 +52,8 @@ export class InitialSchema1720000000000 implements MigrationInterface {
       CREATE TABLE "quickbooks_connections" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "environment" character varying NOT NULL DEFAULT 'sandbox',
-        "realmId" character varying NOT NULL,
+        "realmId" character varying,
+        "realmIdCiphertext" text,
         "accessTokenCiphertext" text NOT NULL,
         "refreshTokenCiphertext" text NOT NULL,
         "tokenType" character varying NOT NULL DEFAULT 'bearer',

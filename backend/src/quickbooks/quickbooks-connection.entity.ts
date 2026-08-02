@@ -8,8 +8,11 @@ export class QuickbooksConnection {
   @Column({ default: 'sandbox' })
   environment: string;
 
-  @Column()
-  realmId: string;
+  @Column({ type: 'varchar', nullable: true })
+  realmId: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  realmIdCiphertext: string | null;
 
   @Column({ type: 'text' })
   accessTokenCiphertext: string;

@@ -6,7 +6,7 @@ import LoginPage from './pages/LoginPage';
 import AcceptInvitePage from './pages/AcceptInvitePage';
 import DashboardPage from './pages/DashboardPage';
 import AdminPage from './pages/AdminPage';
-import { PrivacyPage, TermsPage } from './pages/LegalPage';
+import { PrivacyPage, QuickBooksDisconnectedPage, TermsPage } from './pages/LegalPage';
 
 const queryClient = new QueryClient();
 
@@ -42,8 +42,10 @@ function AppRoutes() {
       <Route path="/accept-invite" element={<AcceptInvitePage />} />
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/quickbooks/disconnected" element={<QuickBooksDisconnectedPage />} />
       <Route path="/dashboard" element={<PrivateRoute residentOnly><DashboardPage /></PrivateRoute>} />
       <Route path="/admin" element={<PrivateRoute adminOnly><AdminPage /></PrivateRoute>} />
+      <Route path="/admin/quickbooks" element={<PrivateRoute adminOnly><AdminPage /></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

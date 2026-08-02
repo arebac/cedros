@@ -79,3 +79,27 @@ export function PrivacyPage() {
     </LegalShell>
   );
 }
+
+
+export function QuickBooksDisconnectedPage() {
+  return (
+    <LegalShell title="QuickBooks Disconnected">
+      <section>
+        <h2>Accounting Sync</h2>
+        <p>The QuickBooks connection for Condominio Los Cedros has been disconnected or needs to be reauthorized.</p>
+      </section>
+      <section>
+        <h2>Reconnect</h2>
+        <p>An authorized condominium administrator can sign in to the portal and reconnect QuickBooks from the accounting sync page.</p>
+      </section>
+      <section>
+        <h2>Resident Payments</h2>
+        <p>Residents do not sign in to QuickBooks. Resident payment access remains managed through the Condominio Los Cedros portal.</p>
+      </section>
+      <section>
+        <h2>Contact</h2>
+        <p>Questions can be sent to adm.loscedros1687@gmail.com.</p>
+      </section>
+    </LegalShell>
+  );
+}

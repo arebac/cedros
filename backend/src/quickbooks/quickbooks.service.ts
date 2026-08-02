@@ -70,14 +70,13 @@ export class QuickbooksService implements OnModuleInit {
 
     const authResponse = await this.oauthClient.createToken(url);
     await this.saveConnection(authResponse.getToken() as QuickBooksToken);
-    this.logger.log(`QuickBooks accounting sync connected. RealmId: ${this.connection?.realmId}`);
+    this.logger.log('QuickBooks accounting sync connected');
   }
 
   getStatus() {
     return {
       connected: this.isConnected(),
       environment: this.getEnvironment(),
-      realmId: this.connection?.realmId ?? null,
     };
   }
 
@@ -126,6 +125,26 @@ export class QuickbooksService implements OnModuleInit {
     ]).toString('utf8');
   }
 
+  private getRealmId(connection: QuickbooksConnection): string {
+    if (connection.realmIdCiphertext) {
+      return this.decryptToken(connection.realmIdCiphertext);
+    }
+
+    if (connection.realmId) {
+      return connection.realmId;
+    }
+
+    throw new Error('QuickBooks connection is missing its company identifier');
+  }
+
+  private async encryptLegacyRealmId(connection: QuickbooksConnection) {
+    if (!connection.realmId || connection.realmIdCiphertext) return;
+
+    connection.realmIdCiphertext = this.encryptToken(connection.realmId);
+    connection.realmId = null;
+    await this.connections.save(connection);
+  }
+
   private async loadSavedConnection() {
     const connection = await this.connections.findOne({
       where: { environment: this.getEnvironment(), active: true },
@@ -133,13 +152,14 @@ export class QuickbooksService implements OnModuleInit {
     });
 
     if (!connection) return;
+    await this.encryptLegacyRealmId(connection);
     this.connection = connection;
     this.applyConnectionToken(connection);
   }
 
   private applyConnectionToken(connection: QuickbooksConnection) {
     this.oauthClient.setToken({
-      realmId: connection.realmId,
+      realmId: this.getRealmId(connection),
       token_type: connection.tokenType,
       access_token: this.decryptToken(connection.accessTokenCiphertext),
       refresh_token: this.decryptToken(connection.refreshTokenCiphertext),
@@ -168,7 +188,8 @@ export class QuickbooksService implements OnModuleInit {
 
     const connection = existing ?? this.connections.create();
     connection.environment = this.getEnvironment();
-    connection.realmId = realmId;
+    connection.realmId = null;
+    connection.realmIdCiphertext = this.encryptToken(realmId);
     connection.accessTokenCiphertext = this.encryptToken(token.access_token);
     connection.refreshTokenCiphertext = this.encryptToken(token.refresh_token);
     connection.tokenType = token.token_type || 'bearer';
@@ -199,7 +220,7 @@ export class QuickbooksService implements OnModuleInit {
       await this.saveConnection(refreshed.getToken() as QuickBooksToken);
     }
 
-    return { realmId: this.connection.realmId, baseUrl: this.getBaseUrl() };
+    return { realmId: this.getRealmId(this.connection), baseUrl: this.getBaseUrl() };
   }
 
   async listCustomers(): Promise<QuickBooksCustomer[]> {
@@ -225,8 +246,8 @@ export class QuickbooksService implements OnModuleInit {
       return null;
     }
 
-    const connection = await this.requireConnection().catch((err) => {
-      this.logger.warn(`${err.message} - skipping sync`);
+    const connection = await this.requireConnection().catch(() => {
+      this.logger.warn('QuickBooks accounting sync unavailable - skipping sync');
       return null;
     });
 
@@ -257,6 +278,8 @@ export class QuickbooksService implements OnModuleInit {
   }
 
   isConnected(): boolean {
-    return !!this.connection?.accessTokenCiphertext && !!this.connection?.refreshTokenCiphertext && !!this.connection?.realmId;
+    return !!this.connection?.accessTokenCiphertext
+      && !!this.connection?.refreshTokenCiphertext
+      && (!!this.connection?.realmIdCiphertext || !!this.connection?.realmId);
   }
 }

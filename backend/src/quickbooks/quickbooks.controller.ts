@@ -27,7 +27,7 @@ export class QuickbooksController {
     const fullUrl = `${this.config.get('QB_REDIRECT_URI')}?${new URLSearchParams(query).toString()}`;
     await this.qb.handleCallback(fullUrl);
     const frontendUrl = this.config.get('FRONTEND_URL', 'http://localhost:5173');
-    return { url: `${frontendUrl}/admin?qb=connected` };
+    return { url: `${frontendUrl}/admin/quickbooks?qb=connected` };
   }
 
   @Get('status')
