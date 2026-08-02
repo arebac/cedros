@@ -50,13 +50,13 @@ export class User {
   @Column({ type: 'simple-enum', enum: Language, default: Language.ES })
   language: Language;
 
-  @Column({ nullable: true, type: 'datetime' })
+  @Column({ nullable: true, type: 'timestamp' })
   moveInDate: Date;
 
   @Column({ nullable: true, type: 'varchar' })
   inviteToken: string | null;
 
-  @Column({ nullable: true, type: 'datetime' })
+  @Column({ nullable: true, type: 'timestamp' })
   inviteTokenExpiresAt: Date | null;
 
   @Column({ default: false })
@@ -67,6 +67,12 @@ export class User {
 
   @Column({ nullable: true })
   stripePaymentMethodId: string;
+
+  @Column({ nullable: true, type: 'varchar' })
+  quickbooksCustomerId: string | null;
+
+  @Column({ nullable: true, type: 'varchar' })
+  quickbooksCustomerName: string | null;
 
   @Column({ default: false })
   autopayEnabled: boolean;

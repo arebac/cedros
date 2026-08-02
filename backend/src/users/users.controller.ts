@@ -1,8 +1,19 @@
-import { Controller, Get, Patch, Body, UseGuards, Param } from '@nestjs/common';
+import { Controller, Get, Patch, Body, UseGuards } from '@nestjs/common';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { UsersService } from './users.service';
-import { User } from './user.entity';
+import { Language, User } from './user.entity';
+
+class UpdateMeDto {
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
+  @IsEnum(Language)
+  language?: Language;
+}
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -15,9 +26,8 @@ export class UsersController {
   }
 
   @Patch('me')
-  updateMe(@CurrentUser() user: User, @Body() body: Partial<User>) {
-    const { role, isActive, passwordHash, ...safe } = body as any;
-    return this.users.update(user.id, safe);
+  updateMe(@CurrentUser() user: User, @Body() body: UpdateMeDto) {
+    return this.users.update(user.id, body);
   }
 
   @Patch('me/autopay')

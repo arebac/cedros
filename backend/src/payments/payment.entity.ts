@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 
@@ -48,6 +49,7 @@ export class Payment {
   @Column({ type: 'simple-enum', enum: PaymentMethod })
   method: PaymentMethod;
 
+  @Index({ unique: true })
   @Column({ nullable: true })
   stripePaymentIntentId: string;
 

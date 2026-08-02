@@ -14,6 +14,7 @@ export class NotificationsController {
   ) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   findAll() {
     return this.announcements.find({ where: { isActive: true }, order: { createdAt: 'DESC' } });
   }

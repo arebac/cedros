@@ -22,6 +22,7 @@ export class QuickbooksController {
   }
 
   @Get('callback')
+  @Redirect()
   async callback(@Query() query: Record<string, string>) {
     const fullUrl = `${this.config.get('QB_REDIRECT_URI')}?${new URLSearchParams(query).toString()}`;
     await this.qb.handleCallback(fullUrl);

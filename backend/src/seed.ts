@@ -1,15 +1,15 @@
-import { DataSource } from 'typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
+import { config as loadEnv } from 'dotenv';
 import * as bcrypt from 'bcrypt';
 import { User, UserRole, Language } from './users/user.entity';
 import { Payment, PaymentMethod, PaymentStatus } from './payments/payment.entity';
 import { Announcement } from './notifications/announcement.entity';
+import { createTypeOrmOptions } from './database/typeorm.config';
 
-const db = new DataSource({
-  type: 'better-sqlite3',
-  database: 'cedros-dev.sqlite',
-  entities: [User, Payment, Announcement],
-  synchronize: true,
-} as any);
+loadEnv();
+
+const db = new DataSource(createTypeOrmOptions(new ConfigService()) as DataSourceOptions);
 
 async function seed() {
   await db.initialize();
@@ -18,9 +18,13 @@ async function seed() {
   const payments = db.getRepository(Payment);
   const announcements = db.getRepository(Announcement);
 
-  await payments.clear();
-  await users.clear();
-  await announcements.clear();
+  if (db.options.type === 'postgres') {
+    await db.query('TRUNCATE TABLE \"payments\", \"users\", \"announcements\" RESTART IDENTITY CASCADE');
+  } else {
+    await payments.clear();
+    await users.clear();
+    await announcements.clear();
+  }
 
   const hash = await bcrypt.hash('password123', 12);
 

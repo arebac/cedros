@@ -6,6 +6,7 @@ import { UserRole, Language } from '../users/user.entity';
 import { UsersService } from '../users/users.service';
 import { PaymentsService } from '../payments/payments.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { QuickbooksService, QuickBooksCustomer } from '../quickbooks/quickbooks.service';
 import { IsString, IsEmail, IsOptional, IsEnum, IsInt, IsDateString } from 'class-validator';
 
 class CreateResidentDto {
@@ -33,6 +34,28 @@ class BlastEmailDto {
   @IsOptional() userIds?: string[];
 }
 
+class QuickBooksCustomerMappingDto {
+  @IsOptional() @IsString() customerId?: string;
+  @IsOptional() @IsString() customerName?: string;
+}
+
+function normalize(value: string | undefined | null): string {
+  return (value ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function findBestCustomerMatch(resident: any, customers: QuickBooksCustomer[]) {
+  const residentEmail = normalize(resident.email);
+  const residentName = normalize(`${resident.firstName} ${resident.lastName}`);
+  const residentApt = normalize(resident.apartmentNumber);
+
+  return customers.find((customer) => normalize(customer.email) === residentEmail)
+    ?? customers.find((customer) => normalize(customer.displayName) === residentName)
+    ?? customers.find((customer) => {
+      const displayName = normalize(customer.displayName);
+      return displayName.includes(residentName) && displayName.includes(residentApt);
+    });
+}
+
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
@@ -41,6 +64,7 @@ export class AdminController {
     private users: UsersService,
     private paymentsService: PaymentsService,
     private notifications: NotificationsService,
+    private quickbooks: QuickbooksService,
   ) {}
 
   @Get('residents')
@@ -121,5 +145,63 @@ export class AdminController {
     );
 
     return { sent: targets.length };
+  }
+
+  @Get('quickbooks/status')
+  getQuickBooksStatus() {
+    return this.quickbooks.getStatus();
+  }
+
+  @Get('quickbooks/connect-url')
+  getQuickBooksConnectUrl() {
+    return { url: this.quickbooks.getAuthUrl() };
+  }
+
+  @Get('quickbooks/customers')
+  getQuickBooksCustomers() {
+    return this.quickbooks.listCustomers();
+  }
+
+  @Post('quickbooks/auto-map-customers')
+  async autoMapQuickBooksCustomers() {
+    const [residents, customers] = await Promise.all([
+      this.users.findAll(),
+      this.quickbooks.listCustomers(),
+    ]);
+
+    const mapped: Array<{ residentId: string; customerId: string; customerName: string }> = [];
+    const unmatched: Array<{ residentId: string; name: string; apartmentNumber: string }> = [];
+
+    for (const resident of residents.filter((user) => user.role === UserRole.RESIDENT)) {
+      const match = findBestCustomerMatch(resident, customers);
+      if (!match) {
+        unmatched.push({
+          residentId: resident.id,
+          name: resident.fullName,
+          apartmentNumber: resident.apartmentNumber,
+        });
+        continue;
+      }
+
+      await this.users.update(resident.id, {
+        quickbooksCustomerId: match.id,
+        quickbooksCustomerName: match.displayName,
+      });
+      mapped.push({
+        residentId: resident.id,
+        customerId: match.id,
+        customerName: match.displayName,
+      });
+    }
+
+    return { mapped, unmatched, totalCustomers: customers.length };
+  }
+
+  @Post('residents/:id/quickbooks-customer')
+  async mapResidentQuickBooksCustomer(@Param('id') id: string, @Body() dto: QuickBooksCustomerMappingDto) {
+    return this.users.update(id, {
+      quickbooksCustomerId: dto.customerId || null,
+      quickbooksCustomerName: dto.customerName || null,
+    });
   }
 }

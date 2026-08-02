@@ -18,7 +18,16 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed": "ts-node -r tsconfig-paths/register src/seed.ts"
+    "seed": "ts-node -r tsconfig-paths/register src/seed.ts",
+    "db:up": "docker compose -f ../docker-compose.yml up -d postgres",
+    "db:down": "docker compose -f ../docker-compose.yml down",
+    "db:logs": "docker compose -f ../docker-compose.yml logs -f postgres",
+    "db:seed": "npm run seed",
+    "typeorm": "typeorm-ts-node-commonjs -d src/database/data-source.ts",
+    "migration:run": "npm run typeorm -- migration:run",
+    "migration:revert": "npm run typeorm -- migration:revert",
+    "migration:run:prod": "typeorm -d dist/database/data-source.js migration:run",
+    "start:prod:migrate": "npm run migration:run:prod && node dist/main"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -42,7 +51,8 @@
     "resend": "^6.12.3",
     "rxjs": "^7.8.1",
     "stripe": "^22.1.1",
-    "typeorm": "^0.3.29"
+    "typeorm": "^0.3.29",
+    "dotenv": "^17.4.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

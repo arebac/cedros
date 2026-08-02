@@ -1,0 +1,11 @@
+.env
+node_modules
+dist
+coverage
+cedros-dev.sqlite
+*.sqlite
+*.sqlite-*
+.postgres-data
+.postgres-log
+npm-debug.log
+.DS_Store

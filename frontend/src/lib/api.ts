@@ -1,6 +1,12 @@
 import axios from 'axios';
 
-export const api = axios.create({ baseURL: '/api' });
+const baseURL = import.meta.env.VITE_API_URL || '/api';
+
+export const api = axios.create({ baseURL });
+
+type RequestConfigWithAuthRedirect = {
+  skipAuthRedirect?: boolean;
+};
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
@@ -11,7 +17,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (r) => r,
   (err) => {
-    if (err.response?.status === 401) {
+    const skipAuthRedirect = (err.config as RequestConfigWithAuthRedirect | undefined)?.skipAuthRedirect;
+
+    if (err.response?.status === 401 && !skipAuthRedirect) {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }

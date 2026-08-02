@@ -56,8 +56,12 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background text-foreground">
       <header className="absolute inset-x-0 top-0 z-20">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
-          <Link to="/" className="text-sm font-semibold uppercase">
-            Los Cedros
+          <Link to="/" className="inline-flex items-center" aria-label="Condominio Los Cedros home">
+            <img
+              src="/condominio_los_cedros_no_background.png"
+              alt="Condominio Los Cedros"
+              className="h-20 w-auto sm:h-24"
+            />
           </Link>
 
           <div className="flex items-center gap-2">

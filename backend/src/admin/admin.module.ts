@@ -3,9 +3,10 @@ import { AdminController } from './admin.controller';
 import { UsersModule } from '../users/users.module';
 import { PaymentsModule } from '../payments/payments.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { QuickbooksModule } from '../quickbooks/quickbooks.module';
 
 @Module({
-  imports: [UsersModule, PaymentsModule, NotificationsModule],
+  imports: [UsersModule, PaymentsModule, NotificationsModule, QuickbooksModule],
   controllers: [AdminController],
 })
 export class AdminModule {}

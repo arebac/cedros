@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { Payment, PaymentMethod, PaymentStatus } from './payment.entity';
@@ -93,6 +93,14 @@ export class PaymentsService {
   private async handlePaymentSuccess(intent: any): Promise<void> {
     const { userId, billingMonth, billingYear, processingFee, method } = intent.metadata;
 
+    const existing = await this.payments.findOne({
+      where: { stripePaymentIntentId: intent.id },
+    });
+    if (existing) {
+      this.logger.log(`Skipping duplicate Stripe payment intent ${intent.id}`);
+      return;
+    }
+
     const user = await this.users.findOne({ where: { id: userId } });
     if (!user) return;
 
@@ -112,9 +120,13 @@ export class PaymentsService {
 
     await this.payments.save(payment);
     await this.notifications.sendPaymentReceipt(user, payment);
-    await this.quickbooks.syncPayment(user, payment).catch((err) =>
-      this.logger.error(`QuickBooks sync failed for payment ${payment.id}: ${err.message}`),
-    );
+    const quickbooksPaymentId = await this.quickbooks.syncPayment(user, payment).catch((err) => {
+      this.logger.error(`QuickBooks sync failed for payment ${payment.id}: ${err.message}`);
+      return null;
+    });
+    if (quickbooksPaymentId) {
+      await this.payments.update(payment.id, { quickbooksPaymentId });
+    }
   }
 
   async getHistory(userId: string): Promise<Payment[]> {
@@ -130,7 +142,14 @@ export class PaymentsService {
     const billingYear = now.getFullYear();
 
     const [payment, user] = await Promise.all([
-      this.payments.findOne({ where: { userId, billingMonth, billingYear, status: PaymentStatus.COMPLETED } }),
+      this.payments.findOne({
+        where: {
+          userId,
+          billingMonth,
+          billingYear,
+          status: In([PaymentStatus.COMPLETED, PaymentStatus.MANUAL]),
+        },
+      }),
       this.users.findOne({ where: { id: userId } }),
     ]);
 
@@ -159,9 +178,14 @@ export class PaymentsService {
       notes,
     });
     await this.payments.save(payment);
-    await this.quickbooks.syncPayment(user, payment).catch((err) =>
-      this.logger.error(`QuickBooks sync failed: ${err.message}`),
-    );
+    const quickbooksPaymentId = await this.quickbooks.syncPayment(user, payment).catch((err) => {
+      this.logger.error(`QuickBooks sync failed: ${err.message}`);
+      return null;
+    });
+    if (quickbooksPaymentId) {
+      await this.payments.update(payment.id, { quickbooksPaymentId });
+      payment.quickbooksPaymentId = quickbooksPaymentId;
+    }
     return payment;
   }
 }

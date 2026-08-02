@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ModeToggle } from '@/components/mode-toggle';
+import { Button } from '@/components/ui/button';
 import { api } from '../lib/api';
 
 export default function AcceptInvitePage() {
@@ -42,10 +44,13 @@ export default function AcceptInvitePage() {
 
   if (invalid) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-red-100 p-8 max-w-md w-full text-center">
-          <p className="text-red-600 font-medium">{t('auth.inviteExpired')}</p>
-          <a href="/" className="mt-4 inline-block text-sm text-gray-500 hover:text-gray-700">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+        <div className="absolute right-5 top-5">
+          <ModeToggle />
+        </div>
+        <div className="bg-card rounded-lg shadow-sm border border-border p-8 max-w-md w-full text-center">
+          <p className="text-destructive font-medium">{t('auth.inviteExpired')}</p>
+          <a href="/" className="mt-4 inline-block text-sm text-muted-foreground hover:text-foreground">
             ← Volver al inicio
           </a>
         </div>
@@ -55,33 +60,40 @@ export default function AcceptInvitePage() {
 
   if (!info) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-400">Cargando...</p>
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <p className="text-muted-foreground">Cargando...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+      <div className="absolute right-5 top-5">
+        <ModeToggle />
+      </div>
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">Condominio Los Cedros</h1>
-          <p className="text-gray-500 mt-1 text-sm">{t('auth.activateAccount')}</p>
+        <div className="text-center mb-8 flex flex-col items-center">
+          <img
+            src="/condominio_los_cedros_no_background.png"
+            alt="Condominio Los Cedros"
+            className="mb-4 h-28 w-auto"
+          />
+          <p className="text-muted-foreground mt-1 text-sm">{t('auth.activateAccount')}</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <div className="mb-6 bg-amber-50 border border-amber-100 rounded-lg p-4">
-            <p className="text-sm text-gray-600">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-8">
+          <div className="mb-6 bg-muted/60 border border-border rounded-md p-4">
+            <p className="text-sm text-foreground">
               {t('auth.welcome')}, <strong>{info.firstName}</strong>
             </p>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               {info.email} · Apto {info.apartmentNumber}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 {t('auth.setPassword')}
               </label>
               <input
@@ -90,12 +102,12 @@ export default function AcceptInvitePage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={8}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C0522A]/30 focus:border-[#C0522A] transition"
+                className="w-full px-4 py-2.5 border border-input bg-muted/60 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 {t('auth.confirmPassword')}
               </label>
               <input
@@ -103,21 +115,21 @@ export default function AcceptInvitePage() {
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C0522A]/30 focus:border-[#C0522A] transition"
+                className="w-full px-4 py-2.5 border border-input bg-muted/60 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition"
               />
             </div>
 
             {error && (
-              <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+              <p className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">{error}</p>
             )}
 
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-[#C0522A] hover:bg-[#a8461e] disabled:opacity-60 text-white font-semibold rounded-lg transition-colors"
+              className="w-full"
             >
               {loading ? '...' : t('auth.activateAccount')}
-            </button>
+            </Button>
           </form>
         </div>
       </div>

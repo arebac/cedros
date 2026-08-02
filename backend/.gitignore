@@ -1,3 +1,8 @@
 .env
 node_modules/
 dist/
+cedros-dev.sqlite
+*.sqlite
+*.sqlite-*
+.postgres-data/
+.postgres-log/
