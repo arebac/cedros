@@ -632,6 +632,14 @@ function QuickBooksTab() {
     },
   });
 
+  const disconnectQuickBooks = useMutation({
+    mutationFn: () => api.post('/admin/quickbooks/disconnect').then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-quickbooks-status'] });
+      qc.invalidateQueries({ queryKey: ['quickbooks-customers'] });
+    },
+  });
+
   const mapCustomer = useMutation({
     mutationFn: ({ residentId, customer }: { residentId: string; customer?: QuickBooksCustomer }) =>
       api.post(`/admin/residents/${residentId}/quickbooks-customer`, {
@@ -671,6 +679,20 @@ function QuickBooksTab() {
             >
               {autoMap.isPending ? 'Mapping...' : 'Auto-map'}
             </Button>
+            {connected && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (window.confirm('Disconnect QuickBooks accounting sync? Payments will not post to QuickBooks until an admin reconnects it.')) {
+                    disconnectQuickBooks.mutate();
+                  }
+                }}
+                disabled={disconnectQuickBooks.isPending}
+              >
+                {disconnectQuickBooks.isPending ? 'Disconnecting...' : 'Disconnect'}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -700,6 +722,12 @@ function QuickBooksTab() {
         {autoMap.data && (
           <p className="mt-3 text-sm text-muted-foreground">
             Auto-map finished: {autoMap.data.mapped?.length ?? 0} mapped, {autoMap.data.unmatched?.length ?? 0} unmatched.
+          </p>
+        )}
+
+        {disconnectQuickBooks.isError && (
+          <p className="mt-3 text-sm text-destructive">
+            Could not disconnect QuickBooks. Try again from an admin account.
           </p>
         )}
       </div>

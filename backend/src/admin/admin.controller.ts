@@ -162,6 +162,11 @@ export class AdminController {
     return this.quickbooks.listCustomers();
   }
 
+  @Post('quickbooks/disconnect')
+  disconnectQuickBooks() {
+    return this.quickbooks.disconnect();
+  }
+
   @Post('quickbooks/auto-map-customers')
   async autoMapQuickBooksCustomers() {
     const [residents, customers] = await Promise.all([

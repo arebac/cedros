@@ -204,6 +204,34 @@ export class QuickbooksService implements OnModuleInit {
     this.applyConnectionToken(this.connection);
   }
 
+  async disconnect(): Promise<{ connected: false }> {
+    if (!this.connection) {
+      await this.loadSavedConnection();
+    }
+
+    if (!this.connection) {
+      return { connected: false };
+    }
+
+    const connection = this.connection;
+    const refreshToken = this.decryptToken(connection.refreshTokenCiphertext);
+
+    try {
+      await this.oauthClient.revoke({ refresh_token: refreshToken });
+    } catch (error: any) {
+      const code = error?.error || error?.authResponse?.json?.error;
+      if (code !== 'invalid_grant') {
+        throw new BadRequestException('Could not disconnect QuickBooks. Please try again.');
+      }
+    }
+
+    connection.active = false;
+    await this.connections.save(connection);
+    this.connection = null;
+    this.logger.log('QuickBooks accounting sync disconnected');
+    return { connected: false };
+  }
+
   private async requireConnection() {
     if (!this.connection) {
       await this.loadSavedConnection();
